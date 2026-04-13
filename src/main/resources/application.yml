@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/contact_db
+    username: postgres
+    password: 2468
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: Kadu2468@*

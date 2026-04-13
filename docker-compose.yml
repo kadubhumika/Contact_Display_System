@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: contact_db_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 2468
+      POSTGRES_DB: contact_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Optional: Auto-init script
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - contactnet
+    restart: always
+
+  redis:
+    image: redis:alpine
+    container_name: contact_db_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - contactnet
+    restart: always
+
+volumes:
+  pgdata:
+
+networks:
+  contactnet:
+    driver: bridge

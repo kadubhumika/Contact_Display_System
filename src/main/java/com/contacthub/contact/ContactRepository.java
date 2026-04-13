@@ -1,0 +1,27 @@
+package com.contacthub.contact;
+
+import com.contacthub.contact.Contact;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ContactRepository extends JpaRepository<Contact, Long> {
+
+
+    List<Contact> findByFirstNameContainingIgnoreCase(String name);
+
+
+    List<Contact> findByFirstNameStartingWithIgnoreCase(String letter);
+
+    List<Contact> findByFavoriteTrue();
+    List<Contact> findByDeletedFalse();
+    List<Contact> findByDeletedTrue();
+
+
+
+
+}
+
+
