@@ -1,5 +1,7 @@
 package com.contacthub.contact;
 
+import com.contacthub.auth.User;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,70 +14,64 @@ public class ContactController {
     @Autowired
     private ContactService service;
 
-    // ADD
-    @PostMapping("/add-contact")
-    public String add(@RequestBody Contact contact) {
-        return service.saveContact(contact);
+    private User getUser(HttpServletRequest request){
+        return (User) request.getAttribute("user");
     }
 
-    // GET ALL
     @GetMapping
-    public List<Contact> getAll() {
-        return service.getAll();
+    public List<Contact> getAll(HttpServletRequest request) {
+        return service.getAll(getUser(request));
     }
 
-    // DELETE
+    @PostMapping("/save")
+    public String save(@RequestBody Contact contact, HttpServletRequest request) {
+        return service.saveContact(contact, getUser(request));
+    }
+
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
-        return service.delete(id);
+    public String delete(@PathVariable Long id, HttpServletRequest request) {
+        return service.delete(id, getUser(request));
     }
 
-    // UPDATE
     @PutMapping("/{id}")
     public String update(@PathVariable Long id,
-                         @RequestBody Contact contact) {
-        return service.update(id, contact);
+                         @RequestBody Contact contact,
+                         HttpServletRequest request) {
+        return service.update(id, contact, getUser(request));
     }
 
-    // FAVORITE
     @PutMapping("/favorite/{id}")
-    public String fav(@PathVariable Long id) {
-        return service.toggleFavorite(id);
+    public String fav(@PathVariable Long id, HttpServletRequest request) {
+        return service.toggleFavorite(id, getUser(request));
     }
 
-    // SEARCH
     @GetMapping("/search")
-    public List<Contact> search(@RequestParam String name) {
-        return service.search(name);
+    public List<Contact> search(@RequestParam String name, HttpServletRequest request) {
+        return service.search(name, getUser(request));
     }
 
-    // FILTER A-Z
     @GetMapping("/starts-with")
-    public List<Contact> filter(@RequestParam String letter) {
-        return service.filter(letter);
+    public List<Contact> filter(@RequestParam String letter, HttpServletRequest request) {
+        return service.filter(letter, getUser(request));
     }
+
     @GetMapping("/favorites")
-    public List<Contact> getFavorites() {
-        return service.getFavorites();
+    public List<Contact> getFavorites(HttpServletRequest request) {
+        return service.getFavorites(getUser(request));
     }
-    @PutMapping("/favorite/add/{id}")
-    public String addFavorite(@PathVariable Long id) {
-        return service.addToFavorite(id);
-    }
-    @PutMapping("/favorite/remove/{id}")
-    public String removeFavorite(@PathVariable Long id){
-        return service.removeFromFavorite(id);
-    }
-    @GetMapping("/sorted")
-    public List<Contact> sorted() {
-        return service.getSorted();
-    }
+
     @DeleteMapping("/delete-multiple")
-    public String deleteMultiple(@RequestBody List<Long> ids) {
-        return service.deleteMultiple(ids);
+    public String deleteMultiple(@RequestBody List<Long> ids, HttpServletRequest request) {
+        return service.deleteMultiple(ids, getUser(request));
     }
+
     @GetMapping("/recent-deleted")
-    public List<Contact> recentDeleted() {
-        return service.getDeleted();
+    public List<Contact> recentDeleted(HttpServletRequest request) {
+        return service.getDeleted(getUser(request));
+    }
+
+    @PutMapping("/restore/{id}")
+    public String restore(@PathVariable Long id, HttpServletRequest request){
+        return service.restore(id, getUser(request));
     }
 }

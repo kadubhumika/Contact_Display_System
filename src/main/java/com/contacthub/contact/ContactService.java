@@ -1,54 +1,49 @@
 package com.contacthub.contact;
 
-import com.contacthub.contact.Contact;
+import com.contacthub.auth.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 import java.util.List;
 import org.springframework.data.domain.Sort;
+
 @Service
 public class ContactService {
 
     @Autowired
     private ContactRepository repo;
 
-    // SAVE
-    public String saveContact(Contact contact) {
+    public String saveContact(Contact contact, User user) {
+        if(user == null) throw new RuntimeException("Unauthorized");
+
+        contact.setUser(user);
         repo.save(contact);
-        return "Contact Saved Successfully";
+
+        return "Saved";
     }
 
-    // GET ALL
-    public List<Contact> getAll() {
-        return repo.findAll();
-    }
-    public List<Contact> getAll() {
-        return repo.findByDeletedFalse();
-    }
-    public List<Contact> getDeleted() {
-        return repo.findByDeletedTrue();
+    public List<Contact> getAll(User user) {
+        return repo.findByUserAndDeletedFalse(user);
     }
 
-    // DELETE
-    public String delete(Long id) {
-        Contact c = repo.findById(id).orElse(null);
+    public List<Contact> getDeleted(User user) {
+        return repo.findByUserAndDeletedTrue(user);
+    }
 
+    public String delete(Long id, User user) {
+        Contact c = repo.findByIdAndUser(id, user);
         if (c == null) return "Not Found";
 
         c.setDeleted(true);
         c.setDeletedAt(java.time.LocalDateTime.now());
-
         repo.save(c);
 
         return "Moved to Recently Deleted";
     }
 
-    // UPDATE
-    public String update(Long id, Contact newData) {
-        Contact c = repo.findById(id).orElse(null);
-
-        if (c == null) return "Contact Not Found";
+    public String update(Long id, Contact newData, User user) {
+        Contact c = repo.findByIdAndUser(id, user);
+        if (c == null) return "Not Found";
 
         c.setFirstName(newData.getFirstName());
         c.setMiddleName(newData.getMiddleName());
@@ -59,16 +54,13 @@ public class ContactService {
         c.setNickname(newData.getNickname());
         c.setNotes(newData.getNotes());
 
-
         repo.save(c);
-
-        return "Updated Successfully";
+        return "Updated";
     }
 
-    // FAVORITE
-    public String toggleFavorite(Long id) {
-        Contact c = repo.findById(id).orElse(null);
-        if (c == null) return "Not found";
+    public String toggleFavorite(Long id, User user) {
+        Contact c = repo.findByIdAndUser(id, user);
+        if (c == null) return "Not Found";
 
         c.setFavorite(!c.isFavorite());
         repo.save(c);
@@ -76,46 +68,38 @@ public class ContactService {
         return "Favorite Updated";
     }
 
-    // SEARCH
-    public List<Contact> search(String name) {
-        return repo.findByFirstNameContainingIgnoreCase(name);
+    public List<Contact> search(String name, User user) {
+        return repo.findByFirstNameContainingIgnoreCaseAndDeletedFalseAndUser(name, user);
     }
 
-    // FILTER A-Z
-    public List<Contact> filter(String letter) {
-        return repo.findByFirstNameStartingWithIgnoreCase(letter);
+    public List<Contact> filter(String letter, User user) {
+        return repo.findByFirstNameStartingWithIgnoreCaseAndDeletedFalseAndUser(letter, user);
     }
-    public String addToFavorite(Long id) {
-        Contact c = repo.findById(id).orElse(null);
 
-        if (c == null) return "Contact Not Found";
+    public List<Contact> getFavorites(User user){
+        return repo.findByFavoriteTrueAndDeletedFalseAndUser(user);
+    }
 
-        c.setFavorite(true);
+    public String deleteMultiple(List<Long> ids, User user) {
+        for(Long id : ids){
+            Contact c = repo.findByIdAndUser(id, user);
+            if(c != null){
+                c.setDeleted(true);
+                c.setDeletedAt(java.time.LocalDateTime.now());
+                repo.save(c);
+            }
+        }
+        return "Deleted";
+    }
+
+    public String restore(Long id, User user){
+        Contact c = repo.findByIdAndUser(id, user);
+        if(c == null) return "Not Found";
+
+        c.setDeleted(false);
+        c.setDeletedAt(null);
         repo.save(c);
 
-        return "Added to Favorites";
+        return "Restored";
     }
-
-
-    public List<Contact> getFavorites(){
-        return repo.findByFavoriteTrue();
-    }
-    public String removeFromFavorite(Long id) {
-        Contact c = repo.findById(id).orElse(null);
-
-        if (c == null) return "Contact Not Found";
-
-        c.setFavorite(false);
-        repo.save(c);
-
-        return "Removed from Favorites";
-    }
-    public List<Contact> getSorted(){
-        return repo.findAll(Sort.by("firstName").ascending());
-    }
-    public String deleteMultiple(List<Long> ids) {
-        repo.deleteAllById(ids);
-        return "Multiple Contacts Deleted";
-    }
-
 }

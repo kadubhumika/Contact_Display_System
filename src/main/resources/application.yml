@@ -20,4 +20,4 @@ spring:
       port: 6379
 
 jwt:
-  secret: Kadu2468@*
+  secret: "Kadu2468@*ThisIsMyLongerSecureSecretKeyForJWT123"

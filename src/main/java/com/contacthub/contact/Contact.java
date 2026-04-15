@@ -1,14 +1,18 @@
 package com.contacthub.contact;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.contacthub.auth.User;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Data
 @Entity
-public class Contact{
+@NoArgsConstructor
+@AllArgsConstructor
+public class Contact {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -17,23 +21,30 @@ public class Contact{
     private String middleName;
     private String lastName;
     private String nickname;
-    private String homeAddress;
-
-
-
+    private String address;
     private String phone;
     private String email;
-
-    private String address;
     private String birthday;
 
-    private boolean favorite;
+    private boolean favorite = false;
     private boolean deleted = false;
+
     private java.time.LocalDateTime deletedAt;
 
     private String accountType;
 
+    @Column(length = 1000)
     private String notes;
 
+    // This runs automatically before saving to DB, replacing your manual constructor
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+    @ManyToOne
+    @JoinColumn(name = "user_id") // This links the contact to a specific user ID
+    private User user;
 }
