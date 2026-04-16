@@ -18,7 +18,7 @@ public class ContactController {
         return (User) request.getAttribute("user");
     }
 
-    @GetMapping
+    @GetMapping("/list-all")
     public List<Contact> getAll(HttpServletRequest request) {
         return service.getAll(getUser(request));
     }
@@ -53,6 +53,15 @@ public class ContactController {
     @GetMapping("/starts-with")
     public List<Contact> filter(@RequestParam String letter, HttpServletRequest request) {
         return service.filter(letter, getUser(request));
+    }
+    @PostMapping("/share/{id}")
+    public String share(@PathVariable Long id, HttpServletRequest req) {
+        return service.generateShare(id, getUser(req));
+    }
+
+    @PostMapping("/import/{shareId}")
+    public String importC(@PathVariable String shareId, HttpServletRequest req) {
+        return service.importContact(shareId, getUser(req));
     }
 
     @GetMapping("/favorites")

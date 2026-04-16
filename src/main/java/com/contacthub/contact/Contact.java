@@ -44,7 +44,13 @@ public class Contact {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
     @ManyToOne
-    @JoinColumn(name = "user_id") // This links the contact to a specific user ID
+    private ContactGroup group;
+    private String shareId;
+    @ManyToOne
     private User user;
+
+
 }
+

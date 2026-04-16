@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.domain.Sort;
 
 @Service
@@ -21,6 +23,35 @@ public class ContactService {
 
         return "Saved";
     }
+    public String generateShare(Long id, User user) {
+
+        Contact c = repo.findByIdAndUser(id, user)
+                .orElseThrow(() -> new RuntimeException("Not found"));
+
+        String shareId = UUID.randomUUID().toString().substring(0, 6);
+
+        c.setShareId(shareId);
+        repo.save(c);
+
+        return shareId;
+    }
+    public String importContact(String shareId, User user) {
+
+        Contact original = repo.findByShareId(shareId)
+                .orElseThrow(() -> new RuntimeException("Invalid share ID"));
+
+        Contact copy = new Contact();
+
+        copy.setFirstName(original.getFirstName());
+        copy.setLastName(original.getLastName());
+        copy.setPhone(original.getPhone());
+        copy.setEmail(original.getEmail());
+        copy.setUser(user);
+
+        repo.save(copy);
+
+        return "Imported successfully";
+    }
 
     public List<Contact> getAll(User user) {
         return repo.findByUserAndDeletedFalse(user);
@@ -31,7 +62,8 @@ public class ContactService {
     }
 
     public String delete(Long id, User user) {
-        Contact c = repo.findByIdAndUser(id, user);
+        Contact c = repo.findByIdAndUser(id, user)
+                .orElse(null);
         if (c == null) return "Not Found";
 
         c.setDeleted(true);
@@ -42,7 +74,8 @@ public class ContactService {
     }
 
     public String update(Long id, Contact newData, User user) {
-        Contact c = repo.findByIdAndUser(id, user);
+        Contact c = repo.findByIdAndUser(id, user)
+                .orElse(null);
         if (c == null) return "Not Found";
 
         c.setFirstName(newData.getFirstName());
@@ -59,7 +92,8 @@ public class ContactService {
     }
 
     public String toggleFavorite(Long id, User user) {
-        Contact c = repo.findByIdAndUser(id, user);
+        Contact c = repo.findByIdAndUser(id, user)
+                .orElse(null);
         if (c == null) return "Not Found";
 
         c.setFavorite(!c.isFavorite());
@@ -82,7 +116,8 @@ public class ContactService {
 
     public String deleteMultiple(List<Long> ids, User user) {
         for(Long id : ids){
-            Contact c = repo.findByIdAndUser(id, user);
+            Contact c = repo.findByIdAndUser(id, user)
+                    .orElse(null);
             if(c != null){
                 c.setDeleted(true);
                 c.setDeletedAt(java.time.LocalDateTime.now());
@@ -93,7 +128,8 @@ public class ContactService {
     }
 
     public String restore(Long id, User user){
-        Contact c = repo.findByIdAndUser(id, user);
+        Contact c = repo.findByIdAndUser(id, user)
+                .orElse(null);
         if(c == null) return "Not Found";
 
         c.setDeleted(false);

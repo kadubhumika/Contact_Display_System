@@ -1,6 +1,8 @@
 package com.contacthub.auth;
 
 import jakarta.servlet.FilterChain;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -42,7 +44,11 @@ public class JwtFilter extends OncePerRequestFilter {
             if (user != null) {
 
                 UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+                        new UsernamePasswordAuthenticationToken(
+                                user,
+                                null,
+                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                        );
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
