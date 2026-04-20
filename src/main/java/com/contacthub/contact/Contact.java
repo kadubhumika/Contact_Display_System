@@ -44,12 +44,18 @@ public class Contact {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+    private String profilePic;
+
 
     @ManyToOne
     private ContactGroup group;
     private String shareId;
+
     @ManyToOne
+    @JoinColumn(name = "user_id") // Use the actual ID column name from your DB
     private User user;
+
+
 
 
 }

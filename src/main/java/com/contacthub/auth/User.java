@@ -19,9 +19,13 @@ public class User {
 
     private String name;
     private String otp;
-// This maps the Java variable to the DB column name
-    private String phoneNo;
 
+    // Map this to the 'phone' column seen in your SQL output
+    @Column(name = "phone")
     private String phone;
+
     private boolean enabled = true;
+
+    @Column(name = "profile_pic")
+    private String profilePic;
 }

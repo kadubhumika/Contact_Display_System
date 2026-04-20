@@ -12,9 +12,11 @@ public class ContactGroup {
     private Long id;
 
     private String name;
+    private String groupPic;
 
     @ManyToOne
     private User user;
+
 
 
 

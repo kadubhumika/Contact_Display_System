@@ -1,25 +1,45 @@
 package com.contacthub.contact;
+import com.contacthub.contact.UIContact;
 
 import com.contacthub.auth.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.domain.Sort;
 
 @Service
 public class ContactService {
+    private UIContact map(Contact c) {
+        UIContact dto = new UIContact();
+        dto.setId(c.getId());
+        dto.setName(c.getFirstName());
+        dto.setPhone(c.getPhone());
+        dto.setEmail(c.getEmail());
+        dto.setFavorite(c.isFavorite());
+        dto.setProfilePic(c.getProfilePic());
+        return dto;
+    }
 
     @Autowired
     private ContactRepository repo;
 
-    public String saveContact(Contact contact, User user) {
-        if(user == null) throw new RuntimeException("Unauthorized");
+    public String saveContact(UIContact dto, User user) {
+        if (user == null) throw new RuntimeException("Unauthorized");
 
-        contact.setUser(user);
-        repo.save(contact);
+        Contact c = new Contact();
+
+        c.setFirstName(dto.getName());   // simple mapping
+        c.setPhone(dto.getPhone());
+        c.setEmail(dto.getEmail());
+        c.setUser(user);
+
+        repo.save(c);
 
         return "Saved";
     }
@@ -53,12 +73,18 @@ public class ContactService {
         return "Imported successfully";
     }
 
-    public List<Contact> getAll(User user) {
-        return repo.findByUserAndDeletedFalse(user);
+    public List<UIContact> getAll(User user) {
+        return repo.findByUserAndDeletedFalse(user)
+                .stream()
+                .map(this::map)
+                .toList();
     }
 
-    public List<Contact> getDeleted(User user) {
-        return repo.findByUserAndDeletedTrue(user);
+    public List<UIContact> getDeleted(User user) {
+        return repo.findByUserAndDeletedTrue(user)
+                .stream()
+                .map(this::map)
+                .toList();
     }
 
     public String delete(Long id, User user) {
@@ -73,19 +99,14 @@ public class ContactService {
         return "Moved to Recently Deleted";
     }
 
-    public String update(Long id, Contact newData, User user) {
+    public String update(Long id, UIContact newData, User user) {
         Contact c = repo.findByIdAndUser(id, user)
                 .orElse(null);
         if (c == null) return "Not Found";
 
-        c.setFirstName(newData.getFirstName());
-        c.setMiddleName(newData.getMiddleName());
-        c.setLastName(newData.getLastName());
+        c.setFirstName(newData.getName());
         c.setPhone(newData.getPhone());
         c.setEmail(newData.getEmail());
-        c.setAddress(newData.getAddress());
-        c.setNickname(newData.getNickname());
-        c.setNotes(newData.getNotes());
 
         repo.save(c);
         return "Updated";
@@ -101,17 +122,44 @@ public class ContactService {
 
         return "Favorite Updated";
     }
+    public String uploadImage(Long id, MultipartFile file, User user) {
+        try {
+            Contact c = repo.findByIdAndUser(id, user).orElseThrow();
 
-    public List<Contact> search(String name, User user) {
-        return repo.findByFirstNameContainingIgnoreCaseAndDeletedFalseAndUser(name, user);
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+            Path path = Paths.get("uploads/" + fileName);
+            Files.createDirectories(path.getParent());
+            Files.write(path, file.getBytes());
+
+            c.setProfilePic(fileName);
+            repo.save(c);
+
+            return "Uploaded";
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public List<Contact> filter(String letter, User user) {
-        return repo.findByFirstNameStartingWithIgnoreCaseAndDeletedFalseAndUser(letter, user);
+    public List<UIContact> search(String name, User user) {
+        return repo.findByFirstNameContainingIgnoreCaseAndDeletedFalseAndUser(name, user)
+                .stream()
+                .map(this::map)
+                .toList();
     }
 
-    public List<Contact> getFavorites(User user){
-        return repo.findByFavoriteTrueAndDeletedFalseAndUser(user);
+    public List<UIContact> filter(String letter, User user) {
+        return repo.findByFirstNameStartingWithIgnoreCaseAndDeletedFalseAndUser(letter, user)
+                .stream()
+                .map(this::map)
+                .toList();
+    }
+
+    public List<UIContact> getFavorites(User user){
+        return repo.findByFavoriteTrueAndDeletedFalseAndUser(user)
+                .stream()
+                .map(this::map)
+                .toList();
     }
 
     public String deleteMultiple(List<Long> ids, User user) {
@@ -127,6 +175,7 @@ public class ContactService {
         return "Deleted";
     }
 
+
     public String restore(Long id, User user){
         Contact c = repo.findByIdAndUser(id, user)
                 .orElse(null);
@@ -137,5 +186,47 @@ public class ContactService {
         repo.save(c);
 
         return "Restored";
+    }
+    public String saveWithImage(String name, String phone, String email,
+                                MultipartFile file, User user) {
+        try {
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+            Path path = Paths.get("uploads/" + fileName);
+            Files.createDirectories(path.getParent());
+            Files.write(path, file.getBytes());
+
+            Contact c = new Contact();
+            c.setFirstName(name);
+            c.setPhone(phone);
+            c.setEmail(email);
+            c.setProfilePic(fileName);
+            c.setUser(user);
+
+            repo.save(c);
+
+            return "Saved";
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public String uploadContactImage(Long id, MultipartFile file, User user) {
+        try {
+            Contact c = repo.findByIdAndUser(id, user)
+                    .orElseThrow(() -> new RuntimeException("Not found"));
+
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+            Path path = Paths.get("uploads/" + fileName);
+            Files.createDirectories(path.getParent());
+            Files.write(path, file.getBytes());
+
+            c.setProfilePic(fileName);
+            repo.save(c);
+
+            return "Uploaded";
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -3,8 +3,16 @@ package com.contacthub.contact;
 import com.contacthub.auth.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -18,13 +26,14 @@ public class ContactController {
         return (User) request.getAttribute("user");
     }
 
+
     @GetMapping("/list-all")
-    public List<Contact> getAll(HttpServletRequest request) {
+    public List<com.contacthub.contact.UIContact> getAll(HttpServletRequest request) {
         return service.getAll(getUser(request));
     }
 
     @PostMapping("/save")
-    public String save(@RequestBody Contact contact, HttpServletRequest request) {
+    public String save(@RequestBody com.contacthub.contact.UIContact contact, HttpServletRequest request) {
         return service.saveContact(contact, getUser(request));
     }
 
@@ -35,9 +44,18 @@ public class ContactController {
 
     @PutMapping("/{id}")
     public String update(@PathVariable Long id,
-                         @RequestBody Contact contact,
+                         @RequestBody com.contacthub.contact.UIContact contact,
                          HttpServletRequest request) {
         return service.update(id, contact, getUser(request));
+    }
+    @GetMapping("/image/{filename}")
+    public ResponseEntity<Resource> getImage(@PathVariable String filename) throws Exception {
+        Path path = Paths.get("uploads/" + filename);
+        Resource resource = new UrlResource(path.toUri());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(path))
+                .body(resource);
     }
 
     @PutMapping("/favorite/{id}")
@@ -46,12 +64,18 @@ public class ContactController {
     }
 
     @GetMapping("/search")
-    public List<Contact> search(@RequestParam String name, HttpServletRequest request) {
+    public List<com.contacthub.contact.UIContact> search(@RequestParam String name, HttpServletRequest request) {
         return service.search(name, getUser(request));
+    }
+    @PostMapping("/upload/{id}")
+    public String uploadContactImage(@PathVariable Long id,
+                                     @RequestParam("file") MultipartFile file,
+                                     HttpServletRequest req) {
+        return service.uploadContactImage(id, file, getUser(req));
     }
 
     @GetMapping("/starts-with")
-    public List<Contact> filter(@RequestParam String letter, HttpServletRequest request) {
+    public List<com.contacthub.contact.UIContact> filter(@RequestParam String letter, HttpServletRequest request) {
         return service.filter(letter, getUser(request));
     }
     @PostMapping("/share/{id}")
@@ -65,7 +89,7 @@ public class ContactController {
     }
 
     @GetMapping("/favorites")
-    public List<Contact> getFavorites(HttpServletRequest request) {
+    public List<com.contacthub.contact.UIContact> getFavorites(HttpServletRequest request) {
         return service.getFavorites(getUser(request));
     }
 
@@ -75,7 +99,7 @@ public class ContactController {
     }
 
     @GetMapping("/recent-deleted")
-    public List<Contact> recentDeleted(HttpServletRequest request) {
+    public List<com.contacthub.contact.UIContact> recentDeleted(HttpServletRequest request) {
         return service.getDeleted(getUser(request));
     }
 
@@ -83,4 +107,5 @@ public class ContactController {
     public String restore(@PathVariable Long id, HttpServletRequest request){
         return service.restore(id, getUser(request));
     }
+
 }

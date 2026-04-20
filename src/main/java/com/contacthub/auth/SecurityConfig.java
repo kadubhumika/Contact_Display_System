@@ -23,6 +23,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

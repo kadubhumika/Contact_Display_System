@@ -3,8 +3,14 @@ package com.contacthub.contact;
 import com.contacthub.auth.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -20,9 +26,13 @@ public class GroupController {
     }
 
     @PostMapping("/create-group")
-    public String create(@RequestBody Map<String, String> body,
+    public String create(@RequestBody Map<String, Object> body,
                          HttpServletRequest req) {
-        return service.createGroup(body.get("name"), getUser(req));
+
+        String name = (String) body.get("name");
+        List<Integer> members = (List<Integer>) body.get("members");
+
+        return service.createGroupWithMembers(name, members, getUser(req));
     }
 
     @GetMapping("/show-group")
@@ -32,8 +42,8 @@ public class GroupController {
 
 
     @GetMapping("/{id}/contacts")
-    public List<Contact> contacts(@PathVariable Long id,
-                                  HttpServletRequest req) {
+    public List<UIContact> contacts(@PathVariable Long id,
+                                    HttpServletRequest req) {
         return service.getContacts(id, getUser(req));
     }
 
@@ -42,5 +52,23 @@ public class GroupController {
                          @PathVariable Long groupId,
                          HttpServletRequest req) {
         return service.assign(contactId, groupId, getUser(req));
+    }
+    @PostMapping("/assign-multiple/{groupId}")
+    public String assignMultiple(@PathVariable Long groupId,
+                                 @RequestBody List<Long> contactIds,
+                                 HttpServletRequest req) {
+        return service.assignMultiple(contactIds, groupId, getUser(req));
+    }
+
+    @GetMapping("/image/{filename}")
+    public ResponseEntity<Resource> getImage(@PathVariable String filename) {
+        try {
+            Path path = Paths.get("uploads").resolve(filename);
+            Resource res = new UrlResource(path.toUri());
+
+            return ResponseEntity.ok().body(res);
+        } catch (Exception e) {
+            throw new RuntimeException("Image not found");
+        }
     }
 }
